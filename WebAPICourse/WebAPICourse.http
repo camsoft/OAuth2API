@@ -1,0 +1,59 @@
+@WebAPICourse_HostAddress = http://localhost:5201
+
+GET {{WebAPICourse_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{WebAPICourse_HostAddress}}/products/
+Accept: application/json
+
+###
+
+# Login as the seeded Admin user (admin / Admin123!) to get a JWT.
+# Copy the "token" value from the response and paste it into @token below.
+POST {{WebAPICourse_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# Login as the seeded Member user (member / Member123!) - can write Products
+# but is not allowed to Delete (Admin role only).
+POST {{WebAPICourse_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "member",
+  "password": "Member123!"
+}
+
+###
+
+@token = PASTE_TOKEN_FROM_LOGIN_RESPONSE_HERE
+
+# Writing a Product requires a valid Bearer token (any authenticated user).
+POST {{WebAPICourse_HostAddress}}/products/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Wireless Headset",
+  "description": "Over-ear wireless headset with noise cancellation",
+  "price": 59.99,
+  "stockQuantity": 100,
+  "categoryId": 2
+}
+
+###
+
+# Deleting a Product requires the Admin role - using a Member token here
+# will return 403 Forbidden.
+DELETE {{WebAPICourse_HostAddress}}/products/1
+Authorization: Bearer {{token}}
+
+###
