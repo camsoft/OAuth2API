@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
 using WebAPICourse.Models;
 
 namespace WebAPICourse.Data
@@ -103,6 +104,11 @@ namespace WebAPICourse.Data
                 new Product { Id = 2, Name = "Mechanical Keyboard", Description = "RGB backlit mechanical keyboard", Price = 89.99m, StockQuantity = 75, CategoryId = 1 },
                 new Product { Id = 3, Name = "USB-C Hub", Description = "7-in-1 USB-C hub", Price = 39.99m, StockQuantity = 200, CategoryId = 2 }
             );
+
+            // Registers the entity sets OpenIddict needs (applications, authorizations,
+            // scopes, tokens) so its Authorization Server can persist OAuth 2.0 clients,
+            // grants, and tokens in this same database via EF Core.
+            modelBuilder.UseOpenIddict();
         }
     }
 }

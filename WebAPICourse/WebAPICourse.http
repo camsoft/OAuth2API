@@ -10,31 +10,58 @@ Accept: application/json
 
 ###
 
-# Login as the seeded Admin user (admin / Admin123!) to get a JWT.
-# Copy the "token" value from the response and paste it into @token below.
-POST {{WebAPICourse_HostAddress}}/api/auth/login
-Content-Type: application/json
+# ---------------------------------------------------------------------------
+# OAuth 2.0 Authorization Code + PKCE flow (replaces the old /api/auth/login).
+# Because this grant is interactive (it requires a browser redirect + login
+# form), it can't be fully automated from a single .http request. Steps:
+#
+# 1. Generate a PKCE code_verifier/code_challenge pair (e.g. via an online
+#    PKCE generator, or `openssl rand` + SHA256, base64url-encoded).
+# 2. Open this URL in a browser (adjust host/port as needed):
+#    {{WebAPICourse_HostAddress}}/connect/authorize
+#      ?client_id=webapicourse-spa
+#      &response_type=code
+#      &redirect_uri=http://localhost:5173/callback
+#      &scope=openid profile roles offline_access
+#      &code_challenge=YOUR_CODE_CHALLENGE
+#      &code_challenge_method=S256
+#      &state=some-random-state-value
+# 3. Sign in with a seeded user (admin / Admin123! or member / Member123!).
+# 4. The browser is redirected to redirect_uri with a `code` query parameter -
+#    copy it into @authorizationCode below.
+# ---------------------------------------------------------------------------
 
-{
-  "username": "admin",
-  "password": "Admin123!"
-}
+@authorizationCode = PASTE_CODE_FROM_REDIRECT_HERE
+@codeVerifier = PASTE_YOUR_CODE_VERIFIER_HERE
+
+# Exchanges the authorization code for an access token + refresh token.
+POST {{WebAPICourse_HostAddress}}/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code={{authorizationCode}}&redirect_uri=http://localhost:5173/callback&client_id=webapicourse-spa&code_verifier={{codeVerifier}}
 
 ###
 
-# Login as the seeded Member user (member / Member123!) - can write Products
-# but is not allowed to Delete (Admin role only).
-POST {{WebAPICourse_HostAddress}}/api/auth/login
-Content-Type: application/json
+@refreshToken = PASTE_REFRESH_TOKEN_FROM_TOKEN_RESPONSE_HERE
 
-{
-  "username": "member",
-  "password": "Member123!"
-}
+# Uses the refresh token to silently obtain a new access token, without
+# forcing the user through the login form again.
+POST {{WebAPICourse_HostAddress}}/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token&refresh_token={{refreshToken}}&client_id=webapicourse-spa
 
 ###
 
-@token = PASTE_TOKEN_FROM_LOGIN_RESPONSE_HERE
+# Revokes a specific access or refresh token (e.g. on manual "log out").
+POST {{WebAPICourse_HostAddress}}/connect/revoke
+Content-Type: application/x-www-form-urlencoded
+
+token={{refreshToken}}&client_id=webapicourse-spa
+
+###
+
+@token = PASTE_ACCESS_TOKEN_FROM_TOKEN_RESPONSE_HERE
 
 # Writing a Product requires a valid Bearer token (any authenticated user).
 POST {{WebAPICourse_HostAddress}}/products/
@@ -57,3 +84,4 @@ DELETE {{WebAPICourse_HostAddress}}/products/1
 Authorization: Bearer {{token}}
 
 ###
+
