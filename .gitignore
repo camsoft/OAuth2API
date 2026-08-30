@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /VideoScript.md
+/login-flow-diagram.svg
+/OAuth_2.0_PKCE_sequence_diagram.jpeg
